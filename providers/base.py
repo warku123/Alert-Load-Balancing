@@ -44,16 +44,22 @@ class BaseProvider(ABC):
         执行HTTP请求
         
         Args:
-            payload: 要发送的数据
+            payload: 要发送的数据（Grafana webhook 原始格式，完全保持不变）
             
         Returns:
             bool: 是否请求成功
         """
         try:
+            # 确保 Content-Type 为 application/json（如果配置中没有指定）
+            headers = self.config.headers.copy()
+            if "Content-Type" not in headers:
+                headers["Content-Type"] = "application/json"
+            
+            # 直接转发原始 payload，不做任何修改
             response = await self.client.post(
                 self.config.endpoint,
-                json=payload,
-                headers=self.config.headers
+                json=payload,  # 完全保持 Grafana 原始格式
+                headers=headers
             )
             response.raise_for_status()
             

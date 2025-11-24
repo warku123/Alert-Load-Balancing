@@ -30,23 +30,14 @@ class AppConfig(BaseSettings):
 
 # 默认配置示例
 DEFAULT_PROVIDERS = [
-    {
-        "name": "provider1",
-        "enabled": True,
-        "endpoint": "https://example.com/webhook1",
-        "headers": {"Content-Type": "application/json"},
-        "timeout": 30,
-        "free_quota": 1000,
-        "used_quota": 0,
-    },
-    {
-        "name": "provider2",
-        "enabled": True,
-        "endpoint": "https://example.com/webhook2",
-        "headers": {"Content-Type": "application/json"},
-        "timeout": 30,
-        "free_quota": 500,
-        "used_quota": 0,
-    },
+    # {
+    #     "name": "provider1",
+    #     "enabled": True,
+    #     "endpoint": "https://example.com/webhook1",
+    #     "headers": {"Content-Type": "application/json"},
+    #     "timeout": 30,
+    #     "free_quota": 1000,
+    #     "used_quota": 0,
+    # },
 ]
 
