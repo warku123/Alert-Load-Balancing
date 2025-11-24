@@ -24,8 +24,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # 复制项目文件
 COPY main.py .
 COPY config.py .
-COPY load_balancer.py .
-COPY providers/ ./providers/
 
 # 创建日志目录
 RUN mkdir -p /app/logs
