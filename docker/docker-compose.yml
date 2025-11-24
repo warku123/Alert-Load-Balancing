@@ -15,8 +15,8 @@ services:
     volumes:
       # 挂载日志目录，方便查看日志
       - ../logs:/app/logs
-      # 如果需要挂载配置文件，可以取消下面的注释
-      # - ../.env:/app/.env:ro
+      # 挂载 .env 配置文件，使容器可以读取环境变量配置
+      - ../.env:/app/.env:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8048/health"]
