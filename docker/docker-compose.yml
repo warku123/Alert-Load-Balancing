@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  webhook-lb:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: webhook-load-balancer
+    ports:
+      - "8000:8000"
+    environment:
+      # 可以通过环境变量覆盖配置
+      # HOST: 0.0.0.0
+      # PORT: 8000
+    volumes:
+      # 挂载日志目录，方便查看日志
+      - ../logs:/app/logs
+      # 如果需要挂载配置文件，可以取消下面的注释
+      # - ../.env:/app/.env:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
