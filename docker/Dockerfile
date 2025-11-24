@@ -30,12 +30,12 @@ COPY providers/ ./providers/
 # 创建日志目录
 RUN mkdir -p /app/logs
 
-# 暴露端口（默认 8000，可通过环境变量修改）
-EXPOSE 8000
+# 暴露端口（默认 8048，可通过环境变量修改）
+EXPOSE 8048
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:8048/health || exit 1
 
 # 启动命令
 CMD ["python", "main.py"]

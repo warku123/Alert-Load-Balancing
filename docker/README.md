@@ -24,7 +24,7 @@ docker-compose build
 ```bash
 docker run -d \
   --name webhook-load-balancer \
-  -p 8000:8000 \
+  -p 8048:8048 \
   -v $(pwd)/logs:/app/logs \
   webhook-load-balancer:latest
 ```
@@ -60,8 +60,8 @@ docker rm webhook-load-balancer
 ```bash
 docker run -d \
   --name webhook-load-balancer \
-  -p 8000:8000 \
-  -e PORT=8000 \
+  -p 8048:8048 \
+  -e PORT=8048 \
   -e HOST=0.0.0.0 \
   -v $(pwd)/logs:/app/logs \
   webhook-load-balancer:latest
@@ -75,10 +75,10 @@ docker run -d \
 
 ```bash
 # 健康检查端点
-curl http://localhost:8000/health
+curl http://localhost:8048/health
 
 # 查看提供者状态
-curl http://localhost:8000/status
+curl http://localhost:8048/status
 ```
 
 ## 查看日志

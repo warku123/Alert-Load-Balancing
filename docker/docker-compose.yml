@@ -7,11 +7,11 @@ services:
       dockerfile: docker/Dockerfile
     container_name: webhook-load-balancer
     ports:
-      - "8000:8000"
-    environment:
-      # 可以通过环境变量覆盖配置
-      # HOST: 0.0.0.0
-      # PORT: 8000
+      - "8048:8048"
+    # 如果需要环境变量，取消下面的注释并配置
+    # environment:
+    #   HOST: 0.0.0.0
+    #   PORT: 8048
     volumes:
       # 挂载日志目录，方便查看日志
       - ../logs:/app/logs
@@ -19,7 +19,7 @@ services:
       # - ../.env:/app/.env:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8048/health"]
       interval: 30s
       timeout: 10s
       retries: 3

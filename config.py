@@ -20,7 +20,7 @@ class ProviderConfig(BaseSettings):
 class AppConfig(BaseSettings):
     """应用配置"""
     host: str = Field(default="0.0.0.0", description="监听地址")
-    port: int = Field(default=8000, description="监听端口")
+    port: int = Field(default=8048, description="监听端口")
     providers: List[ProviderConfig] = Field(default_factory=list, description="云平台提供者列表")
     
     class Config:
