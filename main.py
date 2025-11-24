@@ -103,7 +103,7 @@ async def webhook_handler(payload: Dict[str, Any]):
     # 返回成功响应（固定格式，200状态码）
     return {
         "status": "success",
-        "message": "Alert received"
+        "message": "Alert received and recorded"
     }
 
 
