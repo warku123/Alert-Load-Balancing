@@ -78,8 +78,8 @@ async def webhook_handler(payload: Dict[str, Any]):
     """
     if alert_logger is None:
         return {
-            "success": False,
-            "message": "日志记录器未初始化"
+            "status": "error",
+            "message": "Local alert logger not initialized"
         }
     
     # 记录接收到的报警信息（保持原始 Grafana 格式，不做修改）
@@ -94,18 +94,16 @@ async def webhook_handler(payload: Dict[str, Any]):
         alert_logger.info(f"完整报警数据: {json.dumps(payload, ensure_ascii=False, indent=2)}")
     except Exception as e:
         alert_logger.error(f"记录报警日志失败: {e}")
+        # 即使日志记录失败，也返回成功响应（200状态码）
         return {
-            "success": False,
-            "message": f"记录日志失败: {str(e)}"
+            "status": "error",
+            "message": f"Failed to record alert: {str(e)}"
         }
     
-    # 返回成功响应
+    # 返回成功响应（固定格式，200状态码）
     return {
-        "success": True,
-        "message": "报警已成功接收并记录在本地日志",
-        "received_at": datetime.now().isoformat(),
-        "alert_count": alert_count,
-        "status": status
+        "status": "success",
+        "message": "Alert received"
     }
 
 

@@ -15,11 +15,6 @@ WEBHOOK_URL = "http://localhost:8048/webhook"
 
 
 def test_webhook():
-    """测试 webhook 端点"""
-    print("=" * 60)
-    print("Webhook 负载均衡服务测试")
-    print("=" * 60)
-    
     # 读取测试数据
     if not PAYLOAD_FILE.exists():
         print(f"❌ 错误: 找不到测试文件 {PAYLOAD_FILE}")
@@ -45,7 +40,6 @@ def test_webhook():
     
     # 发送请求
     print(f"\n正在发送请求到: {WEBHOOK_URL}")
-    print("-" * 60)
     
     try:
         response = requests.post(
