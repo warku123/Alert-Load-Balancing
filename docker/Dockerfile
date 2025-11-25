@@ -26,8 +26,6 @@ COPY main.py .
 COPY config.py .
 COPY load_balancer.py .
 COPY providers/ ./providers/
-COPY providers_config.py .
-COPY .env .
 
 # 创建日志目录
 RUN mkdir -p /app/logs
