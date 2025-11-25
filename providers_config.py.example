@@ -1,0 +1,33 @@
+"""
+Provider 配置文件示例
+复制此文件为 providers_config.py 并填入实际的配置信息
+providers_config.py 已在 .gitignore 中，不会被提交到 Git
+"""
+
+# Provider 配置列表
+PROVIDERS = [
+    {
+        "name": "provider1",
+        "enabled": True,
+        "endpoint": "https://example.com/webhook1",
+        "headers": {
+            "Content-Type": "application/json"
+        },
+        "timeout": 30,
+        "free_quota": 1000,
+        "used_quota": 0,
+    },
+    {
+        "name": "provider2",
+        "enabled": True,
+        "endpoint": "https://example.com/webhook2",
+        "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer your-token-here"
+        },
+        "timeout": 30,
+        "free_quota": 500,
+        "used_quota": 0,
+    },
+]
+

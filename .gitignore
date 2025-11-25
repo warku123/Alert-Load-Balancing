@@ -11,4 +11,7 @@ ENV/
 .env.test
 .env.production
 
+# Provider 配置文件（包含敏感信息）
+providers_config.py
+
 logs/

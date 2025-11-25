@@ -8,12 +8,16 @@ import logging
 import json
 from datetime import datetime
 from pathlib import Path
-from config import AppConfig
+from config import AppConfig, ProviderConfig, DEFAULT_PROVIDERS
+from providers import Provider
 
 app = FastAPI(title="Webhook报警接收服务", version="1.0.0")
 
 # 日志记录器
 alert_logger = None
+
+# Provider 列表
+providers: list[Provider] = []
 
 
 def setup_logging():
@@ -51,14 +55,54 @@ def setup_logging():
 
 @app.on_event("startup")
 async def startup_event():
-    """应用启动时初始化日志"""
-    global alert_logger
+    """应用启动时初始化日志和Provider"""
+    global alert_logger, providers
     
     # 初始化日志
     alert_logger = setup_logging()
     alert_logger.info("=" * 50)
     alert_logger.info("Webhook报警接收服务启动")
-    alert_logger.info("服务模式: 仅本地记录（不转发到外部服务）")
+    
+    # 加载配置
+    config = AppConfig()
+    
+    # 初始化 Provider
+    providers.clear()
+    
+    # 如果没有配置提供者，使用默认配置
+    if not config.providers:
+        if DEFAULT_PROVIDERS:
+            config.providers = [ProviderConfig(**p) for p in DEFAULT_PROVIDERS]
+    
+    # 创建 Provider 实例
+    for provider_config in config.providers:
+        if provider_config.enabled:
+            provider = Provider(provider_config)
+            providers.append(provider)
+            alert_logger.info(f"已加载 Provider: {provider.name} (端点: {provider_config.endpoint})")
+    
+    # 记录启动信息
+    if providers:
+        alert_logger.info(f"服务模式: 已配置 {len(providers)} 个云平台提供者")
+    else:
+        alert_logger.info("服务模式: 仅本地记录（未配置云平台提供者，不转发到外部服务）")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """应用关闭时清理资源"""
+    global providers
+    
+    # 关闭所有 Provider 的连接
+    for provider in providers:
+        try:
+            await provider.close()
+        except Exception as e:
+            if alert_logger:
+                alert_logger.error(f"关闭 Provider {provider.name} 连接失败: {e}")
+    
+    if alert_logger:
+        alert_logger.info("服务已关闭")
 
 
 @app.post("/webhook")
