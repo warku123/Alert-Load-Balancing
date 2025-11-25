@@ -14,8 +14,6 @@ PROVIDERS = [
             "Content-Type": "application/json"
         },
         "timeout": 30,
-        "free_quota": 1000,
-        "used_quota": 0,
     },
     {
         "name": "provider2",
@@ -26,8 +24,6 @@ PROVIDERS = [
             "Authorization": "Bearer your-token-here"
         },
         "timeout": 30,
-        "free_quota": 500,
-        "used_quota": 0,
     },
 ]
 

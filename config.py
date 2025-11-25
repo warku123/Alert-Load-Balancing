@@ -15,8 +15,6 @@ class ProviderConfig(BaseSettings):
     endpoint: str = Field(..., description="webhook端点URL")
     headers: Dict[str, str] = Field(default_factory=dict, description="请求头")
     timeout: int = Field(default=30, description="超时时间（秒）")
-    free_quota: int = Field(default=1000, description="免费额度")
-    used_quota: int = Field(default=0, description="已使用额度")
 
 
 def load_providers_config():
@@ -76,8 +74,6 @@ DEFAULT_PROVIDERS = [
     #     "endpoint": "https://example.com/webhook1",
     #     "headers": {"Content-Type": "application/json"},
     #     "timeout": 30,
-    #     "free_quota": 1000,
-    #     "used_quota": 0,
     # },
 ]
 

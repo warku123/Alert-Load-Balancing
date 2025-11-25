@@ -27,14 +27,12 @@ class Provider:
     @property
     def is_available(self) -> bool:
         """
-        检查是否可用（是否启用且有剩余免费额度）
+        检查是否可用（是否启用）
         
         Returns:
             bool: 是否可用
         """
-        if not self.config.enabled:
-            return False
-        return self.config.used_quota < self.config.free_quota
+        return self.config.enabled
     
     async def send_webhook(self, payload: Dict[str, Any]) -> bool:
         """
@@ -59,9 +57,6 @@ class Provider:
                 headers=headers
             )
             response.raise_for_status()
-            
-            # 更新已使用额度
-            self.config.used_quota += 1
             return True
         except Exception as e:
             print(f"Provider {self.name} 发送失败: {e}")
