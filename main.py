@@ -10,14 +10,15 @@ from datetime import datetime
 from pathlib import Path
 from config import AppConfig, ProviderConfig, DEFAULT_PROVIDERS
 from providers import Provider
+from load_balancer import create_load_balancer, BaseLoadBalancer
 
 app = FastAPI(title="Webhook报警接收服务", version="1.0.0")
 
 # 日志记录器
 alert_logger = None
 
-# Provider 列表
-providers: list[Provider] = []
+# 负载均衡器实例
+load_balancer: BaseLoadBalancer = None
 
 
 def setup_logging():
@@ -55,8 +56,8 @@ def setup_logging():
 
 @app.on_event("startup")
 async def startup_event():
-    """应用启动时初始化日志和Provider"""
-    global alert_logger, providers
+    """应用启动时初始化日志和负载均衡器"""
+    global alert_logger, load_balancer
     
     # 初始化日志
     alert_logger = setup_logging()
@@ -66,8 +67,8 @@ async def startup_event():
     # 加载配置
     config = AppConfig()
     
-    # 初始化 Provider
-    providers.clear()
+    # 初始化 Provider 列表
+    providers = []
     
     # 如果没有配置提供者，使用默认配置
     if not config.providers:
@@ -81,25 +82,35 @@ async def startup_event():
             providers.append(provider)
             alert_logger.info(f"已加载 Provider: {provider.name} (端点: {provider_config.endpoint})")
     
-    # 记录启动信息
+    # 初始化负载均衡器
     if providers:
-        alert_logger.info(f"服务模式: 已配置 {len(providers)} 个云平台提供者")
+        try:
+            strategy = config.load_balancer_strategy
+            load_balancer = create_load_balancer(strategy, providers)
+            alert_logger.info(f"负载均衡器已启动: {strategy} 策略, 共 {len(providers)} 个 Provider")
+        except ValueError as e:
+            alert_logger.error(f"负载均衡器初始化失败: {e}")
+            # 初始化失败，默认在本地记录
+            load_balancer = None
+            alert_logger.info(f"初始化负载均衡器失败，将在本地记录报警")
     else:
+        load_balancer = None
         alert_logger.info("服务模式: 仅本地记录（未配置云平台提供者，不转发到外部服务）")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """应用关闭时清理资源"""
-    global providers
+    global load_balancer
     
     # 关闭所有 Provider 的连接
-    for provider in providers:
-        try:
-            await provider.close()
-        except Exception as e:
-            if alert_logger:
-                alert_logger.error(f"关闭 Provider {provider.name} 连接失败: {e}")
+    if load_balancer:
+        for provider in load_balancer.providers:
+            try:
+                await provider.close()
+            except Exception as e:
+                if alert_logger:
+                    alert_logger.error(f"关闭 Provider {provider.name} 连接失败: {e}")
     
     if alert_logger:
         alert_logger.info("服务已关闭")
@@ -138,17 +149,42 @@ async def webhook_handler(payload: Dict[str, Any]):
         alert_logger.info(f"完整报警数据: {json.dumps(payload, ensure_ascii=False, indent=2)}")
     except Exception as e:
         alert_logger.error(f"记录报警日志失败: {e}")
-        # 即使日志记录失败，也返回成功响应（200状态码）
         return {
             "status": "error",
             "message": f"Failed to record alert: {str(e)}"
         }
     
-    # 返回成功响应（固定格式，200状态码）
-    return {
-        "status": "success",
-        "message": "Alert received and recorded"
-    }
+    # 如果有负载均衡器，尝试转发到云平台
+    forward_success = False
+    if load_balancer:
+        try:
+            forward_result = await load_balancer.send(payload)
+            forward_success = forward_result.get("success", False)
+            
+            # 记录转发结果
+            if forward_success:
+                provider_name = forward_result.get("provider", "unknown")
+                alert_logger.info(f"报警转发成功 [提供者={provider_name}]")
+            else:
+                error_msg = forward_result.get("error", "未知错误")
+                provider_name = forward_result.get("provider", "unknown")
+                alert_logger.warning(f"报警转发失败 [提供者={provider_name}, 错误={error_msg}]")
+        except Exception as e:
+            alert_logger.error(f"转发报警时发生异常: {e}")
+            forward_success = False
+    
+    # 返回响应（固定格式，200状态码）
+    # 即使转发失败，也返回成功，因为已经记录在本地日志
+    if forward_success:
+        return {
+            "status": "success",
+            "message": "Alert received and forwarded"
+        }
+    else:
+        return {
+            "status": "success",
+            "message": "Alert received and recorded in local log only"
+        }
 
 
 @app.get("/status")
@@ -159,12 +195,24 @@ async def get_status():
     Returns:
         Dict[str, Any]: 服务状态信息
     """
-    return {
+    status = {
         "service": "webhook-alert-receiver",
-        "mode": "local-only",
         "status": "running",
-        "log_enabled": alert_logger is not None
+        "log_enabled": alert_logger is not None,
+        "load_balancer": None
     }
+    
+    # 如果有负载均衡器，添加 Provider 状态信息
+    if load_balancer:
+        load_balancer_status = load_balancer.get_status()
+        status["load_balancer"] = load_balancer_status
+        # 根据是否有可用的 Provider 设置模式
+        if load_balancer_status["available"] > 0:
+            status["mode"] = "load-balanced"
+        else:
+            status["mode"] = "local-only"
+    
+    return status
 
 
 @app.get("/health")
