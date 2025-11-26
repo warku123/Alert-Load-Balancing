@@ -45,9 +45,6 @@ class BaseLoadBalancer(ABC):
 
 class RoundRobinLoadBalancer(BaseLoadBalancer):
     """轮询负载均衡器（Round Robin）"""
-    
-    """轮询负载均衡器（Round Robin）"""
-    
     def __init__(self, providers: List[Provider]):
         """
         初始化负载均衡器
@@ -138,120 +135,14 @@ class RoundRobinLoadBalancer(BaseLoadBalancer):
         return status
 
 
-class WeightedRoundRobinLoadBalancer(BaseLoadBalancer):
-    """加权轮询负载均衡器（暂未实现，使用轮询策略代替）"""
-    
-    def __init__(self, providers: List[Provider]):
-        super().__init__(providers)
-        # TODO: 实现加权轮询逻辑
-        # 暂时使用轮询策略
-        self.current_index = 0
-    
-    async def send(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        # TODO: 实现加权轮询发送逻辑
-        # 暂时使用轮询策略
-        if not self.providers:
-            return {
-                "success": False,
-                "error": "没有可用的云平台提供者",
-                "provider": None
-            }
-        
-        attempts = 0
-        max_attempts = len(self.providers)
-        while attempts < max_attempts:
-            provider = self.providers[self.current_index]
-            self.current_index = (self.current_index + 1) % len(self.providers)
-            if provider.is_available:
-                success = await provider.send_webhook(payload)
-                return {
-                    "success": success,
-                    "provider": provider.name,
-                    "error": None if success else "发送失败"
-                }
-            attempts += 1
-        
-        return {
-            "success": False,
-            "error": "没有可用的云平台提供者",
-            "provider": None
-        }
-    
-    def get_status(self) -> Dict[str, Any]:
-        status = {
-            "providers": [],
-            "total": len(self.providers),
-            "available": 0
-        }
-        for provider in self.providers:
-            provider_status = {
-                "name": provider.name,
-                "enabled": provider.config.enabled,
-                "available": provider.is_available,
-                "endpoint": provider.config.endpoint
-            }
-            status["providers"].append(provider_status)
-            if provider.is_available:
-                status["available"] += 1
-        return status
+# class WeightedRoundRobinLoadBalancer(BaseLoadBalancer):
+#     """加权轮询负载均衡器（暂未实现，使用轮询策略代替）"""
+#     pass
 
 
-class LeastConnectionsLoadBalancer(BaseLoadBalancer):
-    """最少连接负载均衡器（暂未实现，使用轮询策略代替）"""
-    
-    def __init__(self, providers: List[Provider]):
-        super().__init__(providers)
-        # TODO: 实现最少连接逻辑
-        # 暂时使用轮询策略
-        self.current_index = 0
-    
-    async def send(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        # TODO: 实现最少连接发送逻辑
-        # 暂时使用轮询策略
-        if not self.providers:
-            return {
-                "success": False,
-                "error": "没有可用的云平台提供者",
-                "provider": None
-            }
-        
-        attempts = 0
-        max_attempts = len(self.providers)
-        while attempts < max_attempts:
-            provider = self.providers[self.current_index]
-            self.current_index = (self.current_index + 1) % len(self.providers)
-            if provider.is_available:
-                success = await provider.send_webhook(payload)
-                return {
-                    "success": success,
-                    "provider": provider.name,
-                    "error": None if success else "发送失败"
-                }
-            attempts += 1
-        
-        return {
-            "success": False,
-            "error": "没有可用的云平台提供者",
-            "provider": None
-        }
-    
-    def get_status(self) -> Dict[str, Any]:
-        status = {
-            "providers": [],
-            "total": len(self.providers),
-            "available": 0
-        }
-        for provider in self.providers:
-            provider_status = {
-                "name": provider.name,
-                "enabled": provider.config.enabled,
-                "available": provider.is_available,
-                "endpoint": provider.config.endpoint
-            }
-            status["providers"].append(provider_status)
-            if provider.is_available:
-                status["available"] += 1
-        return status
+# class LeastConnectionsLoadBalancer(BaseLoadBalancer):
+#     """最少连接负载均衡器（暂未实现，使用轮询策略代替）"""
+#     pass
 
 
 def create_load_balancer(strategy: str, providers: List[Provider]) -> BaseLoadBalancer:
@@ -259,7 +150,7 @@ def create_load_balancer(strategy: str, providers: List[Provider]) -> BaseLoadBa
     根据策略创建负载均衡器实例
     
     Args:
-        strategy: 负载均衡策略名称（"round_robin", "weighted_round_robin", "least_connections"）
+        strategy: 负载均衡策略名称（"round_robin"）
         providers: Provider 列表
         
     Returns:
@@ -270,8 +161,8 @@ def create_load_balancer(strategy: str, providers: List[Provider]) -> BaseLoadBa
     """
     strategy_map = {
         "round_robin": RoundRobinLoadBalancer,
-        "weighted_round_robin": WeightedRoundRobinLoadBalancer,
-        "least_connections": LeastConnectionsLoadBalancer,
+        # "weighted_round_robin": WeightedRoundRobinLoadBalancer,  # 暂未实现
+        # "least_connections": LeastConnectionsLoadBalancer,  # 暂未实现
     }
     
     balancer_class = strategy_map.get(strategy.lower())
