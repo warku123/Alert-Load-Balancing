@@ -190,7 +190,7 @@ async def webhook_handler(payload: Dict[str, Any]):
     if forward_success:
         return {
             "status": "success",
-            "message": "Alert received and forwarded"
+            "message": f"Alert received and forwarded to {provider_name}"
         }
     else:
         return {
