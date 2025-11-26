@@ -70,10 +70,20 @@ async def startup_event():
     # 初始化 Provider 列表
     providers = []
     
+    # 检查配置文件是否存在
+    providers_config_file = Path("providers_config.py")
+    if not providers_config_file.exists():
+        alert_logger.warning(f"未找到 providers_config.py 文件，请从 providers_config.py.example 复制并配置")
+    
     # 如果没有配置提供者，使用默认配置
     if not config.providers:
         if DEFAULT_PROVIDERS:
             config.providers = [ProviderConfig(**p) for p in DEFAULT_PROVIDERS]
+            alert_logger.info("使用默认 Provider 配置")
+        else:
+            alert_logger.warning("未找到任何 Provider 配置（providers_config.py 为空或不存在）")
+    else:
+        alert_logger.info(f"从配置文件加载了 {len(config.providers)} 个 Provider 配置")
     
     # 创建 Provider 实例
     for provider_config in config.providers:
@@ -81,6 +91,8 @@ async def startup_event():
             provider = Provider(provider_config)
             providers.append(provider)
             alert_logger.info(f"已加载 Provider: {provider.name} (端点: {provider_config.endpoint})")
+        else:
+            alert_logger.info(f"跳过禁用的 Provider: {provider_config.name}")
     
     # 初始化负载均衡器
     if providers:

@@ -27,6 +27,7 @@ def load_providers_config():
     config_file = Path("providers_config.py")
     
     if not config_file.exists():
+        print(f"信息: providers_config.py 文件不存在，将使用默认配置")
         return []
     
     try:
@@ -37,11 +38,24 @@ def load_providers_config():
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             if hasattr(module, "PROVIDERS"):
-                return module.PROVIDERS
+                providers = module.PROVIDERS
+                if providers and isinstance(providers, list) and len(providers) > 0:
+                    print(f"信息: 成功从 providers_config.py 加载 {len(providers)} 个 Provider 配置")
+                    return providers
+                else:
+                    print(f"警告: providers_config.py 中的 PROVIDERS 列表为空或格式不正确")
+                    return []
+            else:
+                print(f"警告: providers_config.py 中未找到 PROVIDERS 变量")
+                return []
+        else:
+            print(f"错误: 无法创建 providers_config.py 模块规范")
+            return []
     except Exception as e:
-        print(f"警告: 加载 providers_config.py 失败: {e}")
-    
-    return []
+        print(f"错误: 加载 providers_config.py 失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
 
 
 class AppConfig(BaseSettings):
@@ -63,8 +77,11 @@ class AppConfig(BaseSettings):
             if providers_data:
                 try:
                     self.providers = [ProviderConfig(**p) for p in providers_data]
+                    print(f"信息: 成功从 providers_config.py 解析 {len(self.providers)} 个 Provider 配置")
                 except (TypeError, ValueError) as e:
-                    raise ValueError(f"解析 providers_config.py 中的配置失败: {e}")
+                    error_msg = f"解析 providers_config.py 中的配置失败: {e}"
+                    print(f"错误: {error_msg}")
+                    raise ValueError(error_msg)
 
 
 # 默认配置示例
